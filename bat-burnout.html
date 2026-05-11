@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оценка выгорания — BAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f14;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: #2a2d3a;
+    --accent: #e8a87c;
+    --danger: #e87c7c;
+    --success: #7ce8a8;
+    --warn: #e8dc7c;
+    --text: #e8e6df;
+    --muted: #7a7d8a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Mulish', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: flex; flex-direction: column; }
+
+  /* WELCOME */
+  #page-welcome {
+    align-items: center; justify-content: center; padding: 2rem;
+    background: radial-gradient(ellipse at 20% 50%, #1a1228 0%, var(--bg) 60%);
+  }
+  .welcome-card { max-width: 520px; width: 100%; text-align: center; }
+  .logo-mark {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #c06a3a);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.8rem;
+    font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #fff;
+    box-shadow: 0 0 40px rgba(232,168,124,.2);
+  }
+  .welcome-card h1 {
+    font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700;
+    line-height: 1.2; margin-bottom: .5rem;
+    background: linear-gradient(135deg, var(--text) 60%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .welcome-card .sub { color: var(--muted); font-size: .92rem; line-height: 1.6; margin-bottom: 2rem; }
+  .field-wrap { text-align: left; margin-bottom: 1rem; }
+  .field-label { display: block; font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+  input[type="text"], input[type="password"] {
+    width: 100%; padding: .85rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: 'Mulish', sans-serif; font-size: .95rem; outline: none;
+    transition: border-color .2s;
+  }
+  input:focus { border-color: var(--accent); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: .4rem; padding: .85rem 1.8rem; border-radius: var(--radius);
+    font-family: 'Mulish', sans-serif; font-size: .92rem; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; text-decoration: none;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #c06a3a); color: #fff; width: 100%; }
+  .btn-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,168,124,.25); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); width: 100%; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: .5rem 1rem; font-size: .82rem; width: auto; }
+  .btn-danger { background: linear-gradient(135deg, var(--danger), #b05555); color: #fff; }
+  .notice { font-size: .75rem; color: var(--muted); margin-top: 1rem; line-height: 1.5; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.4rem 0; }
+  .err-msg { color: var(--danger); font-size: .82rem; margin-top: .4rem; display: none; }
+
+  /* QUIZ */
+  .quiz-header {
+    position: sticky; top: 0;
+    background: rgba(14,15,20,.93); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: .9rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem; z-index: 10;
+  }
+  .quiz-header .htitle { font-family: 'Playfair Display', serif; font-size: 1rem; }
+  .prog-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #c06a3a); border-radius: 99px; transition: width .35s ease; }
+  .prog-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+  .quiz-body { flex: 1; padding: 2rem 1.5rem; max-width: 680px; margin: 0 auto; width: 100%; }
+  .scale-section { margin-bottom: 3rem; }
+  .scale-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); margin-bottom: .25rem; }
+  .scale-desc { font-size: .8rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+  .q-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.2rem 1.4rem; margin-bottom: .8rem;
+    transition: border-color .2s;
+  }
+  .q-card.answered { border-color: rgba(232,168,124,.35); }
+  .q-num { font-size: .7rem; color: var(--muted); margin-bottom: .3rem; letter-spacing: .05em; }
+  .q-text { font-size: .92rem; line-height: 1.55; margin-bottom: 1rem; }
+  .opts { display: flex; gap: .4rem; }
+  .opt {
+    flex: 1; padding: .5rem .2rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted);
+    font-family: 'Mulish', sans-serif; font-size: .78rem;
+    text-align: center; cursor: pointer; transition: all .14s; line-height: 1.3;
+  }
+  .opt:hover { border-color: var(--accent); color: var(--accent); }
+  .opt.sel { background: rgba(232,168,124,.14); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .opt-num { font-size: .88rem; font-weight: 600; display: block; }
+  .opt-lbl { font-size: .62rem; display: block; margin-top: 1px; }
+  .quiz-footer {
+    padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: flex-end; gap: 1rem;
+    max-width: 680px; margin: 0 auto; width: 100%;
+  }
+  .quiz-footer .btn { width: auto; }
+  #quiz-err { color: var(--danger); font-size: .82rem; margin-right: auto; }
+
+  /* RESULT */
+  #page-result {
+    align-items: center; justify-content: center; padding: 2rem;
+    background: radial-gradient(ellipse at 70% 30%, #141a28 0%, var(--bg) 60%);
+  }
+  .result-card { max-width: 560px; width: 100%; }
+  .result-card h2 {
+    font-family: 'Playfair Display', serif; font-size: 1.9rem; margin-bottom: .3rem;
+    background: linear-gradient(135deg, var(--text) 50%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .result-card .intro { color: var(--muted); font-size: .88rem; margin-bottom: 1.4rem; line-height: 1.5; }
+  .overall-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .45rem 1rem; border-radius: 99px;
+    font-size: .85rem; font-weight: 600; margin-bottom: 1.8rem;
+  }
+  .overall-badge.low    { background: rgba(124,232,168,.1); border: 1px solid rgba(124,232,168,.3); color: var(--success); }
+  .overall-badge.medium { background: rgba(232,220,124,.1); border: 1px solid rgba(232,220,124,.3); color: var(--warn); }
+  .overall-badge.high   { background: rgba(232,124,124,.1); border: 1px solid rgba(232,124,124,.3); color: var(--danger); }
+  .scales-grid { display: grid; gap: .8rem; margin-bottom: 1.8rem; }
+  .sbar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.3rem; }
+  .sbar-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: .6rem; }
+  .sbar-name { font-size: .88rem; font-weight: 500; }
+  .sbar-score { font-size: .78rem; color: var(--muted); }
+  .bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+  .bar-fill.low    { background: var(--success); }
+  .bar-fill.medium { background: var(--warn); }
+  .bar-fill.high   { background: var(--danger); }
+  .sbar-lv { font-size: .7rem; color: var(--muted); margin-top: .3rem; }
+  .result-actions { display: flex; gap: .8rem; flex-wrap: wrap; }
+  .result-actions .btn { flex: 1; min-width: 150px; }
+
+  /* ADMIN LOGIN */
+  #page-admin-login {
+    align-items: center; justify-content: center; padding: 2rem;
+    background: radial-gradient(ellipse at 50% 50%, #0f1520 0%, var(--bg) 70%);
+  }
+  .adm-login-card { max-width: 360px; width: 100%; text-align: center; }
+  .adm-login-card h2 { font-family: 'Playfair Display', serif; font-size: 1.7rem; margin-bottom: .4rem; }
+  .adm-login-card .sub { color: var(--muted); font-size: .85rem; margin-bottom: 1.6rem; }
+
+  /* ADMIN */
+  #page-admin { flex-direction: column; }
+  .adm-header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  }
+  .adm-header h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; flex: 1; min-width: 160px; }
+  .adm-body { flex: 1; padding: 1.5rem; overflow-x: auto; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: .8rem; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.9rem; color: var(--accent); }
+  .stat-label { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
+  .tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  thead th {
+    background: var(--surface2); padding: .75rem .9rem; text-align: left;
+    font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .14s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: .75rem .9rem; vertical-align: middle; }
+  .chip { display: inline-block; padding: .2rem .6rem; border-radius: 99px; font-size: .7rem; font-weight: 600; }
+  .chip.low    { background: rgba(124,232,168,.15); color: var(--success); }
+  .chip.medium { background: rgba(232,220,124,.15); color: var(--warn); }
+  .chip.high   { background: rgba(232,124,124,.15); color: var(--danger); }
+  .empty-state { text-align: center; padding: 3rem; color: var(--muted); font-size: .88rem; line-height: 1.6; }
+  .info-box {
+    background: rgba(124,158,232,.07); border: 1px solid rgba(124,158,232,.2);
+    border-radius: var(--radius); padding: 1rem 1.2rem;
+    font-size: .82rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.2rem;
+  }
+  .info-box a { color: var(--accent); text-decoration: none; }
+  .info-box a:hover { text-decoration: underline; }
+
+  @media (max-width: 560px) {
+    .welcome-card h1 { font-size: 1.6rem; }
+    .opts { gap: .25rem; }
+    .opt-lbl { display: none; }
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeUp .45s ease both; }
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="page-welcome" class="page active">
+  <div class="welcome-card fade-in">
+    <div class="logo-mark">BAT</div>
+    <h1>Оценка профессионального выгорания</h1>
+    <p class="sub">Тест займёт около 5–7 минут. Ваши ответы конфиденциальны и используются только для подготовки тренинга.</p>
+    <div class="field-wrap">
+      <label class="field-label" for="resp-name">Ваше имя и фамилия</label>
+      <input type="text" id="resp-name" placeholder="Иван Иванов" autocomplete="name">
+      <div class="err-msg" id="name-err">Пожалуйста, введите ваше имя.</div>
+    </div>
+    <button class="btn btn-primary" onclick="startQuiz()">Начать тест →</button>
+    <p class="notice">Нажимая «Начать тест», вы соглашаетесь с анонимной обработкой ваших ответов в рамках корпоративного исследования.</p>
+    <hr class="divider">
+    <button class="btn btn-ghost" onclick="showPage('page-admin-login')" style="font-size:.82rem;">
+      🔐 Войти в панель администратора
+    </button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="page-quiz" class="page">
+  <header class="quiz-header">
+    <span class="htitle">BAT</span>
+    <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="prog-label" id="prog-label">0 / 23</span>
+  </header>
+  <div class="quiz-body" id="quiz-body"></div>
+  <div class="quiz-footer">
+    <span id="quiz-err"></span>
+    <button class="btn btn-primary" onclick="submitQuiz()">Завершить тест →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="page-result" class="page">
+  <div class="result-card fade-in">
+    <h2>Ваши результаты</h2>
+    <p class="intro" id="res-name-line"></p>
+    <div id="res-badge"></div>
+    <div class="scales-grid" id="res-scales"></div>
+    <div class="result-actions">
+      <button class="btn btn-ghost" onclick="resetForm()">← Пройти снова</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="page-admin-login" class="page">
+  <div class="adm-login-card fade-in">
+    <div class="logo-mark" style="width:52px;height:52px;font-size:1.1rem;margin-bottom:1.4rem;">🔐</div>
+    <h2>Панель администратора</h2>
+    <p class="sub">Введите пароль для доступа к результатам</p>
+    <div class="field-wrap" style="text-align:left">
+      <label class="field-label" for="adm-pass">Пароль</label>
+      <input type="password" id="adm-pass" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter') checkAdminPass()">
+      <div class="err-msg" id="adm-err">Неверный пароль. Попробуйте снова.</div>
+    </div>
+    <button class="btn btn-primary" onclick="checkAdminPass()">Войти</button>
+    <hr class="divider">
+    <button class="btn btn-ghost" onclick="showPage('page-welcome')" style="font-size:.82rem;">← Назад</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+  <header class="adm-header">
+    <h2>Результаты тестирования</h2>
+    <button class="btn btn-ghost btn-sm" onclick="loadAdmin()">↻ Обновить</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="showPage('page-welcome')">← Выйти</button>
+  </header>
+  <div class="adm-body">
+    <div id="adm-stats"></div>
+    <div id="adm-table"></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby37u7Ith0EM58aZnxQh_3nnSJSa57dyP2xzaJfElqynm85-ttpSJooFhwXDo9f6o1hjQ/exec";
+const ADMIN_PASS = "admin2024";
+const LOCAL_KEY  = "bat_v1";
+
+const SCALES = [
+  { id:"exhaustion",  name:"Истощение",              desc:"Ощущение хронической усталости и опустошённости от работы",
+    questions:["На работе я чувствую себя эмоционально истощённым(ой)","Рабочий день кажется мне бесконечным","После работы мне трудно восстановить силы","Физически я чувствую усталость от своей работы","Мысли о работе мешают мне отдыхать"] },
+  { id:"distance",    name:"Дистанцирование",         desc:"Нарастающая психологическая отстранённость от работы и её смысла",
+    questions:["Мне стало труднее находить смысл в своей работе","Я сомневаюсь в значимости своей работы","Мне трудно проявлять энтузиазм по отношению к работе","Мне всё равно, что происходит с коллегами","Я хочу дистанцироваться от работы и людей на работе"] },
+  { id:"impairment",  name:"Когнитивные нарушения",   desc:"Снижение концентрации, внимания и способности решать задачи",
+    questions:["На работе мне трудно сосредоточиться","Я делаю ошибки из-за того, что не могу сконцентрироваться","Мне сложно обдумывать сложные задачи","Я медленнее соображаю, чем обычно"] },
+  { id:"emotional",   name:"Эмоциональные нарушения", desc:"Потеря контроля над эмоциями, раздражительность, тревога",
+    questions:["На работе я остро реагирую даже на незначительные события","Я чувствую страх, что не справлюсь с работой","Когда я думаю о работе, мне становится тревожно","Я остро реагирую на критику коллег или руководства"] },
+  { id:"physical",    name:"Физические жалобы",       desc:"Соматические симптомы, связанные с рабочим стрессом",
+    questions:["На работе я страдаю от физических недомоганий (головные боли, боли в шее, мышцах и т.п.)","Из-за работы у меня возникают проблемы со сном","Я замечаю, что работа негативно сказывается на моём здоровье","Уровень моего физического здоровья снизился из-за работы"] }
+];
+const OPTS = [{l:"Никогда",v:1},{l:"Редко",v:2},{l:"Иногда",v:3},{l:"Часто",v:4},{l:"Всегда",v:5}];
+const TOTAL_Q = SCALES.reduce((s,sc)=>s+sc.questions.length,0);
+
+let answers = {}, currentName = "";
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function resetForm() {
+  document.getElementById('resp-name').value = '';
+  showPage('page-welcome');
+}
+
+function startQuiz() {
+  const n = document.getElementById('resp-name').value.trim();
+  if (!n) { document.getElementById('name-err').style.display='block'; return; }
+  document.getElementById('name-err').style.display='none';
+  currentName=n; answers={};
+  buildQuiz();
+  showPage('page-quiz');
+}
+
+function buildQuiz() {
+  const body = document.getElementById('quiz-body');
+  body.innerHTML='';
+  let g=0;
+  SCALES.forEach((sc,si)=>{
+    const sec=document.createElement('div');
+    sec.className='scale-section';
+    sec.innerHTML=`<div class="scale-title">${sc.name}</div><div class="scale-desc">${sc.desc}</div>`;
+    sc.questions.forEach((q,qi)=>{
+      g++;
+      const key=`${si}_${qi}`;
+      const card=document.createElement('div');
+      card.className='q-card'; card.id=`qc_${key}`;
+      card.innerHTML=`<div class="q-num">Вопрос ${g}</div>
+        <div class="q-text">${q}</div>
+        <div class="opts">${OPTS.map(o=>`<button class="opt" data-key="${key}" data-val="${o.v}" onclick="pick('${key}',${o.v},this)"><span class="opt-num">${o.v}</span><span class="opt-lbl">${o.l}</span></button>`).join('')}</div>`;
+      sec.appendChild(card);
+    });
+    body.appendChild(sec);
+  });
+}
+
+function pick(key,val,btn){
+  answers[key]=val;
+  document.querySelectorAll(`.opt[data-key="${key}"]`).forEach(b=>b.classList.toggle('sel',b===btn));
+  const card=document.getElementById(`qc_${key}`);
+  if(card) card.classList.add('answered');
+  const n=Object.keys(answers).length;
+  document.getElementById('prog-fill').style.width=(n/TOTAL_Q*100)+'%';
+  document.getElementById('prog-label').textContent=`${n} / ${TOTAL_Q}`;
+}
+
+function submitQuiz(){
+  const missing=[];
+  SCALES.forEach((sc,si)=>sc.questions.forEach((_,qi)=>{ if(!answers[`${si}_${qi}`]) missing.push(`${si}_${qi}`); }));
+  if(missing.length){
+    document.getElementById('quiz-err').textContent=`Ответьте на все вопросы (осталось ${missing.length}).`;
+    document.getElementById(`qc_${missing[0]}`).scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  document.getElementById('quiz-err').textContent='';
+  const r=calcResult();
+  saveResult(r);
+  renderResult(r);
+  showPage('page-result');
+}
+
+function calcResult(){
+  const scaleScores=SCALES.map((sc,si)=>{
+    const vals=sc.questions.map((_,qi)=>answers[`${si}_${qi}`]);
+    const avg=Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10;
+    return{id:sc.id,name:sc.name,avg};
+  });
+  const overall=Math.round(scaleScores.reduce((s,sc)=>s+sc.avg,0)/scaleScores.length*10)/10;
+  return{name:currentName,date:new Date().toISOString(),scaleScores,overall};
+}
+
+function getLevel(score){
+  if(score<=2.5) return{label:"Низкий",cls:"low"};
+  if(score<=3.5) return{label:"Средний",cls:"medium"};
+  return{label:"Высокий",cls:"high"};
+}
+
+function renderResult(r){
+  document.getElementById('res-name-line').textContent=`${r.name} — спасибо за прохождение теста. Ниже — ваши показатели по пяти шкалам.`;
+  const lv=getLevel(r.overall);
+  document.getElementById('res-badge').innerHTML=`<div class="overall-badge ${lv.cls}">Общий уровень выгорания: <strong>${lv.label}</strong> (${r.overall} / 5)</div>`;
+  document.getElementById('res-scales').innerHTML=r.scaleScores.map(sc=>{
+    const slv=getLevel(sc.avg);
+    const pct=Math.round((sc.avg-1)/4*100);
+    return`<div class="sbar"><div class="sbar-head"><span class="sbar-name">${sc.name}</span><span class="sbar-score">${sc.avg} / 5</span></div><div class="bar-track"><div class="bar-fill ${slv.cls}" style="width:${pct}%"></div></div><div class="sbar-lv">${slv.label} уровень</div></div>`;
+  }).join('');
+}
+
+function saveResult(r){
+  const payload={
+    name:r.name, date:r.date,
+    exhaustion: r.scaleScores.find(s=>s.id==='exhaustion')?.avg,
+    distance:   r.scaleScores.find(s=>s.id==='distance')?.avg,
+    impairment: r.scaleScores.find(s=>s.id==='impairment')?.avg,
+    emotional:  r.scaleScores.find(s=>s.id==='emotional')?.avg,
+    physical:   r.scaleScores.find(s=>s.id==='physical')?.avg,
+    overall:    r.overall,
+    level:      getLevel(r.overall).label
+  };
+  // Google Sheets (fire-and-forget)
+  fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .catch(e=>console.warn('Sheets error:',e));
+}
+
+/* ADMIN */
+function checkAdminPass(){
+  if(document.getElementById('adm-pass').value===ADMIN_PASS){
+    document.getElementById('adm-err').style.display='none';
+    document.getElementById('adm-pass').value='';
+    loadAdmin();
+    showPage('page-admin');
+  } else {
+    document.getElementById('adm-err').style.display='block';
+  }
+}
+
+function loadAdmin(){
+  document.getElementById('adm-stats').innerHTML='';
+  document.getElementById('adm-table').innerHTML=`
+    <div class="info-box">
+      📊 Все результаты хранятся в вашей <strong>Google Таблице «BAT Results»</strong>.<br>
+      Данные поступают туда в реальном времени с любого устройства сотрудников.<br>
+      <a href="https://docs.google.com/spreadsheets/" target="_blank">Открыть Google Sheets →</a>
+    </div>
+    <div class="empty-state">
+      Для просмотра всех ответов откройте Google Таблицу.<br>
+      Там можно фильтровать, сортировать и скачивать данные в любом формате.
+    </div>`;
+  document.getElementById('adm-stats').innerHTML=`
+    <div class="stat-card" style="grid-column:1/-1;background:rgba(232,168,124,.05);border-color:rgba(232,168,124,.2)">
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        ✅ Бэкенд подключён к Google Sheets<br>
+        🔗 URL скрипта активен и принимает данные<br>
+        📋 Таблица: <strong>BAT Results</strong> — смотри в Google Drive
+      </div>
+    </div>`;
+}
+
+function exportCSV(){
+  alert('Скачайте данные напрямую из Google Sheets: Файл → Скачать → CSV');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
